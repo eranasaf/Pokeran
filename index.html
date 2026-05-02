@@ -1,0 +1,1320 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#062518">
+<title>ערב פוקר</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&family=Bebas+Neue&display=swap');
+  :root {
+    --felt: #0a3d2e; --felt-light: #14523f; --felt-dark: #062518;
+    --gold: #d4af37; --gold-soft: #b8941f; --cream: #f5f0e1;
+    --red: #c41e3a; --red-bright: #e63946; --green: #6dd49e;
+    --shadow: 0 4px 14px rgba(0,0,0,0.4);
+    --bottom-bar-h: 76px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { overscroll-behavior-y: contain; }
+  body {
+    font-family: 'Heebo', sans-serif;
+    background: var(--felt-dark);
+    background-image: radial-gradient(ellipse at top, var(--felt-light) 0%, var(--felt) 50%, var(--felt-dark) 100%);
+    background-attachment: fixed;
+    min-height: 100vh; color: var(--cream); direction: rtl;
+    padding-bottom: calc(var(--bottom-bar-h) + env(safe-area-inset-bottom, 0));
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  input, textarea { user-select: text; -webkit-user-select: text; }
+
+  .app-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: linear-gradient(180deg, rgba(6,37,24,0.98) 0%, rgba(6,37,24,0.92) 100%);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(212,175,55,0.2);
+    padding: env(safe-area-inset-top, 0) 16px 0;
+  }
+  .app-bar-inner {
+    display: flex; align-items: center; justify-content: center;
+    height: 56px; position: relative;
+  }
+  .app-bar h1 {
+    font-family: 'Bebas Neue', 'Heebo', sans-serif;
+    font-size: 1.6rem; color: var(--gold);
+    letter-spacing: 3px;
+  }
+  .app-bar h1::before { content: "♠ "; opacity: 0.6; }
+  .app-bar h1::after { content: " ♣"; opacity: 0.6; }
+
+  .save-indicator {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 0.7rem; color: var(--green); opacity: 0;
+    transition: opacity 0.3s; display: flex; align-items: center; gap: 4px;
+  }
+  .save-indicator.show { opacity: 0.85; }
+
+  .container { max-width: 720px; margin: 0 auto; padding: 14px 12px; }
+
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: linear-gradient(0deg, rgba(6,37,24,0.98) 0%, rgba(6,37,24,0.94) 100%);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(212,175,55,0.25);
+    display: flex; z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+  }
+  .nav-tab {
+    flex: 1; padding: 10px 4px 8px;
+    background: transparent; border: none;
+    color: var(--cream); opacity: 0.55;
+    font-family: 'Heebo', sans-serif; font-weight: 500; font-size: 0.72rem;
+    cursor: pointer; transition: all 0.2s;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    position: relative;
+  }
+  .nav-tab .icon { font-size: 1.5rem; line-height: 1; }
+  .nav-tab.active { color: var(--gold); opacity: 1; }
+  .nav-tab.active::before {
+    content: ''; position: absolute; top: 0; left: 30%; right: 30%; height: 3px;
+    background: var(--gold); border-radius: 0 0 3px 3px;
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeIn 0.25s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.025) 100%);
+    border: 1px solid rgba(212,175,55,0.22);
+    border-radius: 16px; padding: 16px; margin-bottom: 14px;
+    box-shadow: var(--shadow); backdrop-filter: blur(8px);
+  }
+  .card h2 {
+    color: var(--gold); font-size: 1.05rem; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid rgba(212,175,55,0.18); padding-bottom: 10px;
+    font-weight: 700;
+  }
+
+  .closed-year-card {
+    background: linear-gradient(135deg, rgba(212,175,55,0.08) 0%, rgba(212,175,55,0.02) 100%);
+    border: 1px dashed rgba(212,175,55,0.4);
+  }
+  .closed-year-card h2 { color: var(--gold); opacity: 0.85; }
+  .closed-year-card h2::after { content: " 🔒"; font-size: 0.85rem; opacity: 0.6; }
+
+  .form-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
+  .form-group { flex: 1; min-width: 130px; }
+  label { display: block; color: var(--cream); opacity: 0.85; font-size: 0.8rem; margin-bottom: 5px; font-weight: 500; }
+
+  input[type="text"], input[type="number"], input[type="date"], textarea {
+    width: 100%; padding: 11px 12px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(212,175,55,0.28);
+    border-radius: 10px; color: var(--cream);
+    font-family: 'Heebo', sans-serif; font-size: 0.95rem;
+    transition: all 0.2s ease;
+  }
+  input[type="number"] { -moz-appearance: textfield; }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+  }
+  input:focus, textarea:focus {
+    outline: none; border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(212,175,55,0.12);
+  }
+  textarea { min-height: 80px; resize: vertical; }
+
+  .btn {
+    padding: 12px 18px; border: none; border-radius: 12px;
+    font-family: 'Heebo', sans-serif; font-weight: 600; font-size: 0.95rem;
+    cursor: pointer; transition: all 0.15s ease;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    min-height: 44px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-gold { background: linear-gradient(135deg, var(--gold) 0%, var(--gold-soft) 100%); color: var(--felt-dark); box-shadow: 0 3px 10px rgba(212,175,55,0.35); }
+  .btn-green { background: linear-gradient(135deg, #2d8659 0%, #1f6644 100%); color: var(--cream); }
+  .btn-red { background: linear-gradient(135deg, var(--red-bright) 0%, var(--red) 100%); color: white; }
+  .btn-ghost { background: rgba(212,175,55,0.08); color: var(--cream); border: 1px solid rgba(212,175,55,0.35); }
+  .btn-sm { padding: 7px 12px; font-size: 0.85rem; min-height: auto; }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .btn-group .btn { flex: 1; min-width: 90px; }
+
+  .players-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 14px; }
+  @media (min-width: 600px) { .players-grid { grid-template-columns: 1fr 1fr; } }
+
+  .player-card {
+    background: linear-gradient(145deg, rgba(20,82,63,0.7) 0%, rgba(10,61,46,0.85) 100%);
+    border: 1px solid rgba(212,175,55,0.28);
+    border-radius: 14px; padding: 14px;
+    box-shadow: var(--shadow);
+    transition: transform 0.15s;
+  }
+  .player-card.eran { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), var(--shadow); }
+  .player-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(212,175,55,0.18); }
+  .player-name-wrap { font-weight: 700; font-size: 1.02rem; color: var(--gold); display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+  .player-name-input {
+    background: transparent; border: none; color: var(--gold);
+    font-weight: 700; font-size: 1rem; padding: 2px 4px;
+    flex: 1; min-width: 0;
+  }
+  .delete-player {
+    background: rgba(196,30,58,0.18); border: 1px solid rgba(196,30,58,0.35);
+    color: #ff8090; width: 28px; height: 28px; border-radius: 50%;
+    cursor: pointer; font-size: 1rem; line-height: 1; padding: 0;
+    flex-shrink: 0;
+  }
+  .delete-player:active { background: var(--red); color: white; }
+
+  .field-row { display: flex; gap: 8px; align-items: center; margin-bottom: 7px; }
+  .field-label { flex: 0 0 78px; font-size: 0.85rem; opacity: 0.85; }
+  .field-input {
+    flex: 1; padding: 8px 10px;
+    background: rgba(0,0,0,0.45); border: 1px solid rgba(212,175,55,0.22);
+    border-radius: 8px; color: var(--cream); font-size: 0.95rem; text-align: center;
+    font-family: 'Heebo', sans-serif;
+  }
+
+  .addon-controls { display: flex; gap: 6px; align-items: center; flex: 1; }
+  .addon-btn {
+    width: 34px; height: 34px; border-radius: 8px;
+    border: 1px solid rgba(212,175,55,0.4); background: rgba(212,175,55,0.18);
+    color: var(--gold); cursor: pointer; font-size: 1.15rem; font-weight: 700; line-height: 1;
+    transition: all 0.1s;
+  }
+  .addon-btn:active:not(:disabled) { background: var(--gold); color: var(--felt-dark); transform: scale(0.92); }
+  .addon-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .addon-count { flex: 1; text-align: center; font-weight: 600; color: var(--cream); font-size: 0.95rem; }
+
+  .summary-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.88rem; border-top: 1px dashed rgba(212,175,55,0.18); margin-top: 5px; }
+  .summary-row.total { margin-top: 8px; padding-top: 9px; border-top: 1px solid var(--gold); font-weight: 700; font-size: 0.98rem; }
+  .summary-row.profit { color: var(--green); }
+  .summary-row.loss { color: #ff8090; }
+  .return-input { background: rgba(212,175,55,0.1) !important; border-color: var(--gold) !important; }
+
+  .grand-summary {
+    background: linear-gradient(135deg, rgba(212,175,55,0.13) 0%, rgba(212,175,55,0.04) 100%);
+    border: 1px solid var(--gold); border-radius: 14px;
+    padding: 14px; margin-top: 16px; margin-bottom: 14px;
+  }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (min-width: 600px) { .summary-grid { grid-template-columns: repeat(4, 1fr); } }
+  .stat-box { text-align: center; padding: 12px 8px; background: rgba(0,0,0,0.32); border-radius: 10px; }
+  .stat-value {
+    font-size: 1.45rem; font-weight: 800; color: var(--gold);
+    font-family: 'Bebas Neue', sans-serif; letter-spacing: 1px;
+  }
+  .stat-label { font-size: 0.72rem; opacity: 0.78; margin-top: 3px; text-transform: uppercase; letter-spacing: 1px; }
+
+  .chip-balance {
+    margin-top: 14px; padding: 12px 14px; border-radius: 12px;
+    border: 1px solid; display: flex; align-items: center; gap: 10px;
+    font-size: 0.92rem; font-weight: 500;
+  }
+  .chip-balance.ok { background: rgba(109,212,158,0.12); border-color: var(--green); color: var(--green); }
+  .chip-balance.under { background: rgba(212,175,55,0.12); border-color: var(--gold); color: var(--gold); }
+  .chip-balance.over { background: rgba(196,30,58,0.18); border-color: var(--red-bright); color: #ff8090; animation: pulse 1.5s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(230,57,70,0.5); } 50% { box-shadow: 0 0 0 6px rgba(230,57,70,0); } }
+  .chip-balance .icon-l { font-size: 1.4rem; flex-shrink: 0; }
+  .chip-balance .text { flex: 1; line-height: 1.35; }
+
+  .income-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  .income-table th { background: rgba(212,175,55,0.13); color: var(--gold); padding: 10px 8px; text-align: right; font-weight: 600; border-bottom: 2px solid rgba(212,175,55,0.28); font-size: 0.85rem; }
+  .income-table td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.88rem; }
+  .income-month-input {
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(212,175,55,0.22);
+    border-radius: 8px; padding: 6px 8px; color: var(--cream);
+    width: 100%; max-width: 110px; text-align: center; font-family: 'Heebo', sans-serif;
+  }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.78); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(4px); }
+  .modal-overlay.active { display: flex; animation: fadeIn 0.2s; }
+  .modal {
+    background: linear-gradient(135deg, var(--felt-light) 0%, var(--felt-dark) 100%);
+    border: 1.5px solid var(--gold); border-radius: 16px; padding: 24px;
+    max-width: 380px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .modal h3 { color: var(--gold); font-size: 1.2rem; margin-bottom: 10px; }
+  .modal p { color: var(--cream); margin-bottom: 18px; line-height: 1.5; font-size: 0.95rem; }
+  .modal-btns { display: flex; gap: 10px; justify-content: center; }
+  .modal-btns .btn { flex: 1; }
+
+  .toast {
+    position: fixed; bottom: calc(var(--bottom-bar-h) + 16px); left: 50%; transform: translateX(-50%);
+    background: var(--felt-dark); border: 1px solid var(--gold); color: var(--gold);
+    padding: 10px 22px; border-radius: 24px; box-shadow: var(--shadow);
+    z-index: 2000; opacity: 0; transition: opacity 0.3s, transform 0.3s;
+    pointer-events: none; font-size: 0.9rem;
+    max-width: calc(100% - 30px); text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(-6px); }
+
+  .stats-table { width: 100%; border-collapse: collapse; }
+  .stats-table th { background: rgba(212,175,55,0.13); color: var(--gold); padding: 10px 8px; text-align: right; font-weight: 600; font-size: 0.83rem; border-bottom: 2px solid rgba(212,175,55,0.28); }
+  .stats-table td { padding: 10px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.88rem; }
+  .pl-positive { color: var(--green); font-weight: 600; }
+  .pl-negative { color: #ff8090; font-weight: 600; }
+
+  .empty-state { text-align: center; padding: 30px 20px; color: var(--cream); opacity: 0.5; font-style: italic; font-size: 0.92rem; }
+  .chart-container { position: relative; height: 280px; margin-top: 12px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 10px; }
+  .hint { font-size: 0.75rem; opacity: 0.65; margin-top: 4px; font-style: italic; }
+
+  button { touch-action: manipulation; }
+  input { font-size: 16px !important; }
+
+  .external-entry-form {
+    display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px;
+    align-items: end;
+  }
+  @media (max-width: 480px) {
+    .external-entry-form { grid-template-columns: 1fr 1fr; }
+    .external-entry-form .btn { grid-column: span 2; }
+  }
+
+  .external-list { margin-top: 12px; }
+  .external-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px; background: rgba(0,0,0,0.25); border-radius: 8px;
+    margin-bottom: 6px; font-size: 0.9rem;
+  }
+  .external-row .date-col { opacity: 0.85; }
+  .external-row .amount-col { font-weight: 700; }
+
+  .year-final-banner {
+    background: linear-gradient(135deg, rgba(212,175,55,0.2) 0%, rgba(212,175,55,0.05) 100%);
+    border: 2px solid var(--gold);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .year-final-banner .ttl { font-size: 0.78rem; opacity: 0.85; margin-bottom: 4px; letter-spacing: 1px; text-transform: uppercase; }
+  .year-final-banner .val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--gold);
+    letter-spacing: 2px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-bar">
+  <div class="app-bar-inner">
+    <h1>ערב פוקר</h1>
+    <div class="save-indicator" id="save-indicator">💾 נשמר</div>
+  </div>
+</div>
+
+<div class="container">
+  <!-- ============ TAB 1: GAME NIGHT ============ -->
+  <div class="tab-content active" id="tab-game">
+
+    <div class="card">
+      <h2>🗓️ פרטי הערב</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>תאריך</label>
+          <input type="date" id="game-date">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>➕ הוספת שחקנים</h2>
+      <div class="form-row">
+        <div class="form-group" style="flex: 2;">
+          <label>הדבק רשימת שמות (שורה לכל אחד או מופרד בפסיקים)</label>
+          <textarea id="bulk-names" placeholder="דנה&#10;יוסי&#10;מיכל"></textarea>
+        </div>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-gold" onclick="addBulkPlayers()">הוסף את כולם</button>
+      </div>
+      <div class="hint" style="margin-top: 8px;">מקסימום 10 שחקנים. ערן נוסף אוטומטית.</div>
+    </div>
+
+    <div id="players-container" class="players-grid"></div>
+
+    <div class="grand-summary" id="grand-summary" style="display:none;">
+      <div class="summary-grid">
+        <div class="stat-box">
+          <div class="stat-value" id="total-buyin">₪0</div>
+          <div class="stat-label">קופה</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="house-net">₪0</div>
+          <div class="stat-label">בית נטו</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="eran-net">₪0</div>
+          <div class="stat-label">רווח/הפסד</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-value" id="total-evening">₪0</div>
+          <div class="stat-label">סה"כ הערב</div>
+        </div>
+      </div>
+      <div id="chip-balance" class="chip-balance ok" style="display:none;"></div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-green" onclick="saveGame()">💾 שמור</button>
+      <button class="btn btn-gold" onclick="saveAndTransfer()">📤 שמור והעבר</button>
+      <button class="btn btn-red" onclick="confirmClear()">🗑️</button>
+    </div>
+  </div>
+
+  <!-- ============ TAB 2: INCOME ============ -->
+  <div class="tab-content" id="tab-income">
+
+    <!-- Closed years (rendered dynamically before active year) -->
+    <div id="closed-years-container"></div>
+
+    <!-- Active year -->
+    <div class="card" id="active-year-card">
+      <h2 id="active-year-title">📅 הכנסות 2026</h2>
+      <table class="income-table">
+        <thead><tr><th>חודש</th><th>בית</th><th>רווח/הפסד</th><th>סה"כ</th></tr></thead>
+        <tbody id="income-tbody"></tbody>
+      </table>
+      <div class="grand-summary" style="margin-top: 12px;">
+        <div class="summary-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="stat-box">
+            <div class="stat-value" id="annual-total">₪0</div>
+            <div class="stat-label">סה"כ שנתי</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="annual-avg">₪0</div>
+            <div class="stat-label">ממוצע חודשי</div>
+          </div>
+        </div>
+      </div>
+      <div class="btn-group" style="margin-top: 14px;">
+        <button class="btn btn-gold" onclick="confirmCloseYear()">📊 סכם שנה</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🎲 רישום ידני (ערב חיצוני)</h2>
+      <div class="hint" style="margin-bottom: 10px;">למשל: שיחקתי אצל חבר ורק רוצה לעדכן רווח/הפסד אישי.</div>
+      <div class="external-entry-form">
+        <div>
+          <label>תאריך</label>
+          <input type="date" id="ext-date">
+        </div>
+        <div>
+          <label>סכום (₪, מינוס להפסד)</label>
+          <input type="number" id="ext-amount" placeholder="200 או -150" step="10" inputmode="numeric">
+        </div>
+        <button class="btn btn-gold" onclick="addExternalEntry()">הוסף</button>
+      </div>
+      <div class="external-list" id="external-list"></div>
+    </div>
+
+    <div class="card">
+      <h2>📋 פירוט ערבים</h2>
+      <table class="income-table" id="games-log-table">
+        <thead>
+          <tr><th>תאריך</th><th>שחקנים</th><th>בית</th><th>רווח שלי</th><th>נטו</th><th></th></tr>
+        </thead>
+        <tbody id="games-log-tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>📈 גרף שנתי</h2>
+      <div class="chart-container"><canvas id="annual-chart"></canvas></div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-gold" onclick="exportToExcel()">📥 ייצא לאקסל</button>
+    </div>
+  </div>
+
+  <!-- ============ TAB 3: STATS ============ -->
+  <div class="tab-content" id="tab-stats">
+    <div class="card">
+      <h2>🏆 שחקנים מצטבר</h2>
+      <div id="stats-table-content"></div>
+    </div>
+    <div class="card">
+      <h2>📊 גרף שחקנים</h2>
+      <div class="chart-container"><canvas id="players-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-tab active" data-tab="game"><span class="icon">🎰</span><span>משחק</span></button>
+  <button class="nav-tab" data-tab="income"><span class="icon">💰</span><span>הכנסות</span></button>
+  <button class="nav-tab" data-tab="stats"><span class="icon">📊</span><span>שחקנים</span></button>
+</nav>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3 id="modal-title">אישור</h3>
+    <p id="modal-text">האם אתה בטוח?</p>
+    <div class="modal-btns">
+      <button class="btn btn-red" id="modal-confirm">כן</button>
+      <button class="btn btn-ghost" onclick="closeModal()">לא</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = 'eran_poker_tracker_v5';
+const MONTHS_HE = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+
+let state = {
+  activeYear: 2026,
+  currentGame: { date: '', players: [] },
+  // income stored as { 'YYYY-MM': { house, profit } }
+  income: {
+    '2026-01': { house: 1200, profit: 0 },
+    '2026-02': { house: 1500, profit: 0 },
+    '2026-03': { house: 3100, profit: 0 },
+    '2026-04': { house: 3600, profit: 0 }
+  },
+  gamesLog: [],
+  externalEntries: [],
+  playerStats: {},
+  // closedYears: [{ year, total, closedAt }]
+  closedYears: []
+};
+
+// ============ STORAGE ============
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state = { ...state, ...parsed };
+    }
+    if (!state.activeYear) state.activeYear = 2026;
+    ensureYearMonths(state.activeYear);
+    if (!Array.isArray(state.externalEntries)) state.externalEntries = [];
+    if (!Array.isArray(state.closedYears)) state.closedYears = [];
+
+    // Migrate old number-format income entries (just in case)
+    Object.keys(state.income).forEach(k => {
+      if (typeof state.income[k] === 'number') {
+        state.income[k] = { house: state.income[k], profit: 0 };
+      }
+    });
+  } catch (e) { console.error('Load error:', e); }
+}
+
+function ensureYearMonths(year) {
+  for (let m = 1; m <= 12; m++) {
+    const k = `${year}-${String(m).padStart(2,'0')}`;
+    if (state.income[k] === undefined) state.income[k] = { house: 0, profit: 0 };
+  }
+}
+
+let saveTimeout = null;
+function saveState(showFlash = true) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if (showFlash) flashSaveIndicator();
+  } catch (e) {
+    console.error('Save failed:', e);
+    showToast('⚠️ שגיאה בשמירה');
+  }
+}
+
+function autoSave() {
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => saveState(true), 300);
+}
+
+function flashSaveIndicator() {
+  const ind = document.getElementById('save-indicator');
+  ind.classList.add('show');
+  setTimeout(() => ind.classList.remove('show'), 1000);
+}
+
+window.addEventListener('beforeunload', () => saveState(false));
+window.addEventListener('pagehide', () => saveState(false));
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') saveState(false);
+});
+
+// ============ TABS ============
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (tab.dataset.tab === 'income') {
+      renderClosedYears();
+      renderIncome();
+      renderGamesLog();
+      renderExternalList();
+      renderChart();
+      if (!document.getElementById('ext-date').value) {
+        document.getElementById('ext-date').value = new Date().toISOString().slice(0,10);
+      }
+    }
+    if (tab.dataset.tab === 'stats') renderStats();
+  });
+});
+
+// ============ GAME ============
+function makePlayer(name, isEran = false) {
+  return {
+    id: 'p_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    name: name, isEran: isEran,
+    entry: isEran ? 0 : 130, house: isEran ? 0 : 70,
+    addons: 0, returned: 0
+  };
+}
+
+function ensureEran() {
+  if (!state.currentGame.players.find(p => p.isEran)) {
+    state.currentGame.players.unshift(makePlayer('ערן', true));
+  }
+}
+
+function nonEranCount() {
+  return state.currentGame.players.filter(p => !p.isEran).length;
+}
+
+function computeExpenses() {
+  return nonEranCount() * 20;
+}
+
+function addBulkPlayers() {
+  const raw = document.getElementById('bulk-names').value.trim();
+  if (!raw) { showToast('הדבק שמות תחילה'); return; }
+  const names = raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+  ensureEran();
+  let added = 0;
+  for (const name of names) {
+    if (state.currentGame.players.length >= 10) break;
+    if (state.currentGame.players.find(p => p.name === name)) continue;
+    state.currentGame.players.push(makePlayer(name));
+    added++;
+  }
+  document.getElementById('bulk-names').value = '';
+  showToast(`נוספו ${added} שחקנים`);
+  renderPlayers();
+  autoSave();
+}
+
+function removePlayer(id) {
+  state.currentGame.players = state.currentGame.players.filter(p => p.id !== id);
+  renderPlayers();
+  autoSave();
+}
+
+function updatePlayer(id, field, value) {
+  const p = state.currentGame.players.find(p => p.id === id);
+  if (!p) return;
+  if (field === 'name') p.name = value;
+  else p[field] = parseFloat(value) || 0;
+  renderPlayers();
+  autoSave();
+}
+
+function changeAddon(id, delta) {
+  const p = state.currentGame.players.find(p => p.id === id);
+  if (!p) return;
+  p.addons = Math.max(0, p.addons + delta);
+  renderPlayers();
+  autoSave();
+}
+
+function calcPlayer(p) {
+  const moneyIn = p.entry + (p.addons * 100);
+  const chipsReceived = moneyIn * 2;
+  const plShekels = (p.returned / 2) - moneyIn;
+  return { moneyIn, chipsReceived, plShekels };
+}
+
+function renderPlayers() {
+  ensureEran();
+  const container = document.getElementById('players-container');
+  container.innerHTML = '';
+  state.currentGame.players.forEach(p => {
+    const calc = calcPlayer(p);
+    const card = document.createElement('div');
+    card.className = 'player-card' + (p.isEran ? ' eran' : '');
+    const plClass = calc.plShekels > 0 ? 'profit' : (calc.plShekels < 0 ? 'loss' : '');
+    const plSign = calc.plShekels > 0 ? '+' : '';
+    card.innerHTML = `
+      <div class="player-header">
+        <div class="player-name-wrap">
+          ${p.isEran ? '👑' : '🎯'}
+          <input type="text" class="player-name-input" value="${escapeHtml(p.name)}" ${p.isEran ? 'readonly' : ''}
+                 onchange="updatePlayer('${p.id}','name',this.value)">
+        </div>
+        ${p.isEran ? '' : `<button class="delete-player" onclick="removePlayer('${p.id}')" title="מחק">×</button>`}
+      </div>
+      <div class="field-row">
+        <div class="field-label">כניסה (₪)</div>
+        <input type="number" class="field-input" value="${p.entry}" step="10" inputmode="numeric"
+               onchange="updatePlayer('${p.id}','entry',this.value)">
+      </div>
+      <div class="field-row">
+        <div class="field-label">בית (₪)</div>
+        <input type="number" class="field-input" value="${p.house}" step="10" inputmode="numeric"
+               onchange="updatePlayer('${p.id}','house',this.value)">
+      </div>
+      <div class="field-row">
+        <div class="field-label">תוספות</div>
+        <div class="addon-controls">
+          <button class="addon-btn" onclick="changeAddon('${p.id}',-1)" ${p.addons === 0 ? 'disabled' : ''}>−</button>
+          <div class="addon-count">${p.addons} × 100₪</div>
+          <button class="addon-btn" onclick="changeAddon('${p.id}',1)">+</button>
+        </div>
+      </div>
+      <div class="summary-row"><span>סה"כ קנייה:</span><span><strong>₪${calc.moneyIn}</strong></span></div>
+      <div class="summary-row"><span>צ'יפים שקיבל:</span><span><strong>${calc.chipsReceived}</strong></span></div>
+      <div class="field-row" style="margin-top:8px;">
+        <div class="field-label">החזיר (צ'יפים)</div>
+        <input type="number" class="field-input return-input" value="${p.returned}" step="10" inputmode="numeric"
+               onchange="updatePlayer('${p.id}','returned',this.value)">
+      </div>
+      <div class="summary-row total ${plClass}">
+        <span>רווח/הפסד:</span>
+        <span>${plSign}₪${calc.plShekels.toFixed(0)}</span>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+  renderGrandSummary();
+}
+
+function calcEvening() {
+  const players = state.currentGame.players;
+  let totalChipsBought = 0, totalChipsReturned = 0;
+  let houseGross = 0, eranBaseline = 0, totalBuyinShekels = 0;
+
+  players.forEach(p => {
+    const c = calcPlayer(p);
+    totalBuyinShekels += c.moneyIn;
+    totalChipsBought += c.chipsReceived;
+    totalChipsReturned += p.returned;
+    houseGross += p.house;
+    if (p.isEran) eranBaseline = c.plShekels;
+  });
+
+  const expenses = computeExpenses();
+  const houseNet = houseGross - expenses;
+  const chipDiff = totalChipsBought - totalChipsReturned;
+  const chipDiffShekels = chipDiff / 2;
+  const eranAdjusted = chipDiff >= 0 ? eranBaseline + chipDiffShekels : eranBaseline;
+  const eveningTotal = houseNet + eranAdjusted;
+
+  return {
+    totalBuyinShekels, totalChipsBought, totalChipsReturned,
+    houseGross, houseNet, expenses,
+    eranBaseline, chipDiff, chipDiffShekels, eranAdjusted, eveningTotal
+  };
+}
+
+function renderGrandSummary() {
+  const players = state.currentGame.players;
+  if (players.length === 0) { document.getElementById('grand-summary').style.display = 'none'; return; }
+  document.getElementById('grand-summary').style.display = 'block';
+
+  const e = calcEvening();
+  document.getElementById('total-buyin').textContent = '₪' + e.totalBuyinShekels;
+  document.getElementById('house-net').textContent = '₪' + e.houseNet;
+  document.getElementById('eran-net').textContent = (e.eranAdjusted >= 0 ? '+' : '') + '₪' + e.eranAdjusted.toFixed(0);
+  document.getElementById('eran-net').style.color = e.eranAdjusted >= 0 ? 'var(--green)' : '#ff8090';
+  document.getElementById('total-evening').textContent = (e.eveningTotal >= 0 ? '+' : '') + '₪' + e.eveningTotal.toFixed(0);
+
+  const balEl = document.getElementById('chip-balance');
+  if (e.totalChipsReturned === 0 && e.totalChipsBought === 0) {
+    balEl.style.display = 'none';
+    return;
+  }
+  balEl.style.display = 'flex';
+  if (e.chipDiff === 0 && e.totalChipsBought > 0) {
+    balEl.className = 'chip-balance ok';
+    balEl.innerHTML = `<span class="icon-l">✅</span><span class="text">איזון מושלם — ${e.totalChipsBought} צ'יפים נקנו וכולם הוחזרו.</span>`;
+  } else if (e.chipDiff > 0) {
+    balEl.className = 'chip-balance under';
+    balEl.innerHTML = `<span class="icon-l">ℹ️</span><span class="text">חסרים ${e.chipDiff} צ'יפים (₪${e.chipDiffShekels.toFixed(0)}) — נוסף לרווח שלך אוטומטית.</span>`;
+  } else {
+    balEl.className = 'chip-balance over';
+    balEl.innerHTML = `<span class="icon-l">⚠️</span><span class="text">החזירו ${Math.abs(e.chipDiff)} צ'יפים יותר מהקנייה (₪${Math.abs(e.chipDiffShekels).toFixed(0)})! בדוק את הספירה.</span>`;
+  }
+}
+
+// ============ ACTIONS ============
+function saveGame() {
+  state.currentGame.date = document.getElementById('game-date').value;
+  saveState(true);
+  showToast('✅ נשמר במכשיר');
+}
+
+function saveAndTransfer() {
+  const date = document.getElementById('game-date').value;
+  if (!date) { showToast('בחר תאריך משחק'); return; }
+  if (state.currentGame.players.length < 2) { showToast('צריך לפחות 2 שחקנים'); return; }
+
+  const e = calcEvening();
+  state.currentGame.date = date;
+
+  if (e.chipDiff < 0) {
+    showModal('אי-איזון צ\'יפים',
+      `הוחזרו ${Math.abs(e.chipDiff)} צ'יפים יותר מהקנייה (₪${Math.abs(e.chipDiffShekels).toFixed(0)}). זה כנראה טעות בספירה. להמשיך בכל זאת?`,
+      () => { doTransfer(date, e); });
+    return;
+  }
+  doTransfer(date, e);
+}
+
+function doTransfer(date, e) {
+  const playerSnapshots = [];
+  state.currentGame.players.forEach(p => {
+    const c = calcPlayer(p);
+    playerSnapshots.push({ name: p.name, isEran: p.isEran, moneyIn: c.moneyIn, house: p.house, returned: p.returned, pl: c.plShekels });
+    if (!state.playerStats[p.name]) state.playerStats[p.name] = { games: 0, totalPL: 0 };
+    state.playerStats[p.name].games += 1;
+    state.playerStats[p.name].totalPL += c.plShekels;
+  });
+
+  const month = date.slice(0,7);
+  const year = parseInt(date.slice(0,4));
+  ensureYearMonths(year);
+  if (!state.income[month]) state.income[month] = { house: 0, profit: 0 };
+  state.income[month].house += e.houseNet;
+  state.income[month].profit += e.eranAdjusted;
+
+  state.gamesLog.push({
+    id: 'g_' + Date.now(),
+    date: date, month: month,
+    playerCount: state.currentGame.players.length,
+    totalBuyin: e.totalBuyinShekels,
+    houseGross: e.houseGross, houseNet: e.houseNet,
+    expenses: e.expenses,
+    eranBaseline: e.eranBaseline,
+    chipDiff: e.chipDiff,
+    eranAdjusted: e.eranAdjusted,
+    netToMonth: e.eveningTotal,
+    players: playerSnapshots
+  });
+
+  state.currentGame = { date: '', players: [] };
+  ensureEran();
+  document.getElementById('game-date').value = new Date().toISOString().slice(0,10);
+
+  saveState(true);
+  renderPlayers();
+  showToast(`✅ הועבר! נטו: ₪${e.eveningTotal.toFixed(0)}`);
+}
+
+function confirmClear() {
+  showModal('מחיקת ערב',
+    'פעולה זו תמחק את כל פרטי הערב הנוכחי. הנתונים שכבר הועברו להכנסות יישמרו. האם להמשיך?',
+    () => {
+      state.currentGame = { date: '', players: [] };
+      ensureEran();
+      document.getElementById('game-date').value = new Date().toISOString().slice(0,10);
+      saveState(true);
+      renderPlayers();
+      showToast('🗑️ נמחק');
+    });
+}
+
+// ============ EXTERNAL ENTRIES ============
+function addExternalEntry() {
+  const date = document.getElementById('ext-date').value;
+  const amountStr = document.getElementById('ext-amount').value;
+  if (!date) { showToast('בחר תאריך'); return; }
+  const amount = parseFloat(amountStr);
+  if (isNaN(amount) || amount === 0) { showToast('הזן סכום'); return; }
+
+  const month = date.slice(0,7);
+  const year = parseInt(date.slice(0,4));
+  ensureYearMonths(year);
+  if (!state.income[month]) state.income[month] = { house: 0, profit: 0 };
+  state.income[month].profit += amount;
+
+  state.externalEntries.push({
+    id: 'ext_' + Date.now(),
+    date: date, month: month, amount: amount
+  });
+
+  document.getElementById('ext-amount').value = '';
+  saveState(true);
+  renderIncome();
+  renderExternalList();
+  renderChart();
+  showToast(`✅ נוסף: ${amount >= 0 ? '+' : ''}₪${amount}`);
+}
+
+function deleteExternalEntry(id) {
+  showModal('מחיקת רישום', 'למחוק את הרישום הידני?', () => {
+    const ent = state.externalEntries.find(e => e.id === id);
+    if (!ent) return;
+    if (state.income[ent.month]) state.income[ent.month].profit -= ent.amount;
+    state.externalEntries = state.externalEntries.filter(e => e.id !== id);
+    saveState(true);
+    renderIncome();
+    renderExternalList();
+    renderChart();
+    showToast('🗑️ נמחק');
+  });
+}
+
+function renderExternalList() {
+  const container = document.getElementById('external-list');
+  container.innerHTML = '';
+  if (state.externalEntries.length === 0) return;
+  // Show only entries from active year
+  const filtered = state.externalEntries.filter(e => e.date.startsWith(state.activeYear + '-'));
+  if (filtered.length === 0) return;
+  const sorted = [...filtered].sort((a,b) => b.date.localeCompare(a.date));
+  sorted.forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'external-row';
+    const cls = e.amount >= 0 ? 'pl-positive' : 'pl-negative';
+    const sign = e.amount >= 0 ? '+' : '';
+    row.innerHTML = `
+      <div class="date-col">📅 ${e.date}</div>
+      <div class="amount-col ${cls}">${sign}₪${e.amount}</div>
+      <button class="btn btn-red btn-sm" onclick="deleteExternalEntry('${e.id}')">🗑️</button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// ============ INCOME (active year) ============
+function calcYearTotal(year) {
+  let total = 0;
+  for (let m = 1; m <= 12; m++) {
+    const r = state.income[`${year}-${String(m).padStart(2,'0')}`] || { house: 0, profit: 0 };
+    total += (r.house || 0) + (r.profit || 0);
+  }
+  return total;
+}
+
+function renderIncome() {
+  document.getElementById('active-year-title').textContent = `📅 הכנסות ${state.activeYear}`;
+
+  const tbody = document.getElementById('income-tbody');
+  tbody.innerHTML = '';
+  let totalAll = 0, monthsWithData = 0;
+
+  for (let m = 1; m <= 12; m++) {
+    const key = `${state.activeYear}-${String(m).padStart(2,'0')}`;
+    const rec = state.income[key] || { house: 0, profit: 0 };
+    const total = (rec.house || 0) + (rec.profit || 0);
+    if (total !== 0) monthsWithData++;
+    totalAll += total;
+
+    const profitClass = rec.profit > 0 ? 'pl-positive' : (rec.profit < 0 ? 'pl-negative' : '');
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><strong>${MONTHS_HE[m-1]}</strong></td>
+      <td><input type="number" class="income-month-input" value="${(rec.house || 0).toFixed(0)}" step="50" inputmode="numeric"
+                 onchange="updateIncomeField('${key}','house',this.value)"></td>
+      <td class="${profitClass}"><input type="number" class="income-month-input" value="${(rec.profit || 0).toFixed(0)}" step="50" inputmode="numeric"
+                 onchange="updateIncomeField('${key}','profit',this.value)"></td>
+      <td><strong>₪${total.toFixed(0)}</strong></td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  document.getElementById('annual-total').textContent = '₪' + totalAll.toFixed(0);
+  document.getElementById('annual-avg').textContent = '₪' + (monthsWithData ? (totalAll/monthsWithData).toFixed(0) : 0);
+}
+
+function updateIncomeField(key, field, val) {
+  if (!state.income[key]) state.income[key] = { house: 0, profit: 0 };
+  state.income[key][field] = parseFloat(val) || 0;
+  saveState(true);
+  renderIncome();
+  renderChart();
+}
+
+// ============ CLOSED YEARS ============
+function renderClosedYears() {
+  const container = document.getElementById('closed-years-container');
+  container.innerHTML = '';
+  if (!state.closedYears || state.closedYears.length === 0) return;
+  // Sort closed years ascending (oldest first, so newer ones are right above active year)
+  const sorted = [...state.closedYears].sort((a,b) => a.year - b.year);
+  sorted.forEach(cy => {
+    const card = document.createElement('div');
+    card.className = 'card closed-year-card';
+    card.innerHTML = `
+      <h2>📅 הכנסות ${cy.year}</h2>
+      <div class="year-final-banner">
+        <div class="ttl">סך הכנסות שנתי</div>
+        <div class="val">₪${cy.total.toFixed(0)}</div>
+      </div>
+      <div class="hint" style="margin-top: 10px; text-align: center;">השנה נסגרה ב-${cy.closedAt || ''}. הנתונים נעולים.</div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+// ============ CLOSE YEAR ============
+function confirmCloseYear() {
+  const total = calcYearTotal(state.activeYear);
+  showModal(
+    `סיכום שנת ${state.activeYear}`,
+    `האם אתה בטוח? פעולה זו תייצא את כל נתוני השנה לאקסל, תקפיא את סך השנה (₪${total.toFixed(0)}) ותתחיל שנה חדשה (${state.activeYear + 1}).`,
+    () => { closeYear(); }
+  );
+}
+
+function closeYear() {
+  const yearToClose = state.activeYear;
+  const total = calcYearTotal(yearToClose);
+
+  // Export to Excel first
+  exportYearToExcel(yearToClose);
+
+  // Add to closed years
+  const today = new Date().toISOString().slice(0,10);
+  state.closedYears.push({
+    year: yearToClose,
+    total: total,
+    closedAt: today
+  });
+
+  // Move active year forward
+  state.activeYear = yearToClose + 1;
+  ensureYearMonths(state.activeYear);
+
+  saveState(true);
+  renderClosedYears();
+  renderIncome();
+  renderGamesLog();
+  renderExternalList();
+  renderChart();
+  showToast(`✅ שנת ${yearToClose} נסגרה. שנה חדשה: ${state.activeYear}`);
+}
+
+// ============ GAMES LOG ============
+function renderGamesLog() {
+  const tbody = document.getElementById('games-log-tbody');
+  tbody.innerHTML = '';
+  // Show only games from active year
+  const filtered = state.gamesLog.filter(g => g.date.startsWith(state.activeYear + '-'));
+  if (filtered.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">עדיין אין ערבי משחק שמורים בשנה זו</td></tr>`;
+    return;
+  }
+  const sorted = [...filtered].sort((a,b) => b.date.localeCompare(a.date));
+  for (const g of sorted) {
+    const eranVal = g.eranAdjusted !== undefined ? g.eranAdjusted : (g.eranPL || 0);
+    const houseVal = g.houseNet !== undefined ? g.houseNet : (g.houseFixed || 0);
+    const plClass = eranVal >= 0 ? 'pl-positive' : 'pl-negative';
+    const plSign = eranVal >= 0 ? '+' : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${g.date.slice(5)}</td>
+      <td>${g.playerCount}</td>
+      <td>₪${houseVal.toFixed(0)}</td>
+      <td class="${plClass}">${plSign}₪${eranVal.toFixed(0)}</td>
+      <td><strong>₪${g.netToMonth.toFixed(0)}</strong></td>
+      <td><button class="btn btn-red btn-sm" onclick="confirmDeleteGame('${g.id}')">🗑️</button></td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function confirmDeleteGame(id) {
+  showModal('מחיקת ערב', 'פעולה זו תמחק את הערב מהיומן ותחזיר את ההכנסה החודשית. להמשיך?', () => {
+    const g = state.gamesLog.find(x => x.id === id);
+    if (!g) return;
+    if (state.income[g.month]) {
+      const houseVal = g.houseNet !== undefined ? g.houseNet : (g.houseFixed || 0);
+      const eranVal = g.eranAdjusted !== undefined ? g.eranAdjusted : (g.eranPL || 0);
+      state.income[g.month].house -= houseVal;
+      state.income[g.month].profit -= eranVal;
+    }
+    for (const ps of g.players) {
+      if (state.playerStats[ps.name]) {
+        state.playerStats[ps.name].games = Math.max(0, state.playerStats[ps.name].games - 1);
+        state.playerStats[ps.name].totalPL -= ps.pl;
+        if (state.playerStats[ps.name].games === 0) delete state.playerStats[ps.name];
+      }
+    }
+    state.gamesLog = state.gamesLog.filter(x => x.id !== id);
+    saveState(true);
+    renderIncome(); renderGamesLog(); renderChart();
+    showToast('🗑️ הערב נמחק');
+  });
+}
+
+// ============ CHARTS ============
+let annualChartInstance = null;
+function renderChart() {
+  const ctx = document.getElementById('annual-chart');
+  if (!ctx) return;
+  const labels = MONTHS_HE.map(m => m.slice(0,3));
+  const totalData = [];
+  for (let m = 1; m <= 12; m++) {
+    const r = state.income[`${state.activeYear}-${String(m).padStart(2,'0')}`] || { house: 0, profit: 0 };
+    totalData.push((r.house || 0) + (r.profit || 0));
+  }
+  const colors = totalData.map(v => v > 0 ? 'rgba(109,212,158,0.78)' : (v < 0 ? 'rgba(255,107,122,0.78)' : 'rgba(212,175,55,0.5)'));
+  const borders = totalData.map(v => v > 0 ? '#6dd49e' : (v < 0 ? '#ff8090' : '#d4af37'));
+
+  if (annualChartInstance) annualChartInstance.destroy();
+  annualChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'נטו חודשי (₪)',
+        data: totalData,
+        backgroundColor: colors,
+        borderColor: borders,
+        borderWidth: 1.5,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: '#f5f0e1', font: { family: 'Heebo', size: 11 }, boxWidth: 12 } },
+        tooltip: {
+          callbacks: {
+            label: (c) => {
+              const v = c.parsed.y;
+              const sign = v > 0 ? '+' : '';
+              return 'נטו: ' + sign + '₪' + v.toFixed(0);
+            },
+            afterLabel: (c) => {
+              const m = c.dataIndex + 1;
+              const r = state.income[`${state.activeYear}-${String(m).padStart(2,'0')}`] || { house: 0, profit: 0 };
+              const profitSign = r.profit > 0 ? '+' : '';
+              return [`בית: ₪${(r.house || 0).toFixed(0)}`, `רווח/הפסד: ${profitSign}₪${(r.profit || 0).toFixed(0)}`];
+            }
+          }
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#f5f0e1', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#f5f0e1', callback: v => '₪' + v, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+}
+
+let playersChartInstance = null;
+function renderStats() {
+  const container = document.getElementById('stats-table-content');
+  const entries = Object.entries(state.playerStats);
+  if (entries.length === 0) {
+    container.innerHTML = `<div class="empty-state">עדיין אין נתוני שחקנים. שמור והעבר ערב משחק כדי להתחיל לצבור היסטוריה.</div>`;
+    if (playersChartInstance) { playersChartInstance.destroy(); playersChartInstance = null; }
+    return;
+  }
+  entries.sort((a,b) => b[1].totalPL - a[1].totalPL);
+  let html = `
+    <table class="stats-table">
+      <thead><tr><th>#</th><th>שם</th><th>משחקים</th><th>מצטבר</th><th>ממוצע</th></tr></thead>
+      <tbody>
+  `;
+  entries.forEach(([name, s], i) => {
+    const cls = s.totalPL > 0 ? 'pl-positive' : (s.totalPL < 0 ? 'pl-negative' : '');
+    const sign = s.totalPL > 0 ? '+' : '';
+    const avg = s.games ? s.totalPL / s.games : 0;
+    const avgSign = avg > 0 ? '+' : '';
+    html += `
+      <tr>
+        <td>${i+1}</td>
+        <td><strong>${escapeHtml(name)}</strong></td>
+        <td>${s.games}</td>
+        <td class="${cls}">${sign}₪${s.totalPL.toFixed(0)}</td>
+        <td class="${cls}">${avgSign}₪${avg.toFixed(0)}</td>
+      </tr>
+    `;
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+
+  const ctx = document.getElementById('players-chart');
+  if (!ctx) return;
+  const labels = entries.map(([n]) => n);
+  const data = entries.map(([,s]) => s.totalPL);
+  const colors = data.map(v => v >= 0 ? 'rgba(109,212,158,0.75)' : 'rgba(255,107,122,0.75)');
+  const borders = data.map(v => v >= 0 ? '#6dd49e' : '#ff8090');
+  if (playersChartInstance) playersChartInstance.destroy();
+  playersChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: labels, datasets: [{ label: 'מצטבר (₪)', data: data, backgroundColor: colors, borderColor: borders, borderWidth: 1, borderRadius: 4 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: {
+        legend: { labels: { color: '#f5f0e1', font: { family: 'Heebo', size: 11 } } },
+        tooltip: { callbacks: { label: (c) => '₪' + c.parsed.x.toFixed(0) } }
+      },
+      scales: {
+        x: { ticks: { color: '#f5f0e1', callback: v => '₪' + v, font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: '#f5f0e1', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      }
+    }
+  });
+}
+
+// ============ EXCEL EXPORT (current state) ============
+function exportToExcel() {
+  const wb = XLSX.utils.book_new();
+  buildIncomeSheet(wb, state.activeYear);
+  buildGamesSheet(wb, state.activeYear);
+  buildExternalSheet(wb, state.activeYear);
+  buildStatsSheet(wb);
+  buildDetailSheet(wb, state.activeYear);
+
+  // Add closed years summary if any
+  if (state.closedYears && state.closedYears.length > 0) {
+    const rows = [['שנה','סך הכנסות','תאריך סיכום']];
+    [...state.closedYears].sort((a,b) => a.year - b.year).forEach(cy => {
+      rows.push([cy.year, cy.total, cy.closedAt || '']);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:10},{wch:14},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, ws, 'שנים סגורות');
+  }
+
+  const today = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `poker_tracker_${today}.xlsx`);
+  showToast('📥 הקובץ הורד');
+}
+
+// Year-specific export (for close-year flow)
+function exportYearToExcel(year) {
+  const wb = XLSX.utils.book_new();
+  buildIncomeSheet(wb, year);
+  buildGamesSheet(wb, year);
+  buildExternalSheet(wb, year);
+  buildStatsSheet(wb);
+  buildDetailSheet(wb, year);
+  XLSX.writeFile(wb, `poker_year_${year}_summary.xlsx`);
+}
+
+function buildIncomeSheet(wb, year) {
+  const incomeRows = [['חודש','שנה','בית','רווח/הפסד','סה"כ']];
+  let totalAll = 0;
+  for (let m = 1; m <= 12; m++) {
+    const r = state.income[`${year}-${String(m).padStart(2,'0')}`] || { house: 0, profit: 0 };
+    const total = (r.house || 0) + (r.profit || 0);
+    totalAll += total;
+    incomeRows.push([MONTHS_HE[m-1], year, r.house || 0, r.profit || 0, total]);
+  }
+  incomeRows.push([]);
+  incomeRows.push(['סה"כ שנתי','','','',totalAll]);
+  const ws = XLSX.utils.aoa_to_sheet(incomeRows);
+  ws['!cols'] = [{wch:14},{wch:8},{wch:12},{wch:14},{wch:12}];
+  XLSX.utils.book_append_sheet(wb, ws, `הכנסות ${year}`);
+}
+
+function buildGamesSheet(wb, year) {
+  const gamesRows = [['תאריך','חודש','שחקנים','קופה','בית גרוס','הוצאות','בית נטו','רווח/הפסד','נטו לחודש']];
+  const filtered = state.gamesLog.filter(g => g.date.startsWith(year + '-'));
+  const sortedGames = [...filtered].sort((a,b) => a.date.localeCompare(b.date));
+  for (const g of sortedGames) {
+    const houseGross = g.houseGross !== undefined ? g.houseGross : 0;
+    const houseNet = g.houseNet !== undefined ? g.houseNet : (g.houseFixed || 0);
+    const expenses = g.expenses !== undefined ? g.expenses : 0;
+    const eranVal = g.eranAdjusted !== undefined ? g.eranAdjusted : (g.eranPL || 0);
+    gamesRows.push([g.date, MONTHS_HE[parseInt(g.month.slice(5))-1], g.playerCount, g.totalBuyin, houseGross, expenses, houseNet, eranVal, g.netToMonth]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(gamesRows);
+  ws['!cols'] = [{wch:12},{wch:10},{wch:10},{wch:10},{wch:12},{wch:12},{wch:12},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws, `יומן ערבים ${year}`);
+}
+
+function buildExternalSheet(wb, year) {
+  const filtered = state.externalEntries.filter(e => e.date.startsWith(year + '-'));
+  if (filtered.length === 0) return;
+  const rows = [['תאריך','חודש','סכום (₪)']];
+  const sorted = [...filtered].sort((a,b) => a.date.localeCompare(b.date));
+  for (const e of sorted) {
+    rows.push([e.date, MONTHS_HE[parseInt(e.month.slice(5))-1], e.amount]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [{wch:12},{wch:10},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws, `רישומים ידניים ${year}`);
+}
+
+function buildStatsSheet(wb) {
+  const statsRows = [['שם','משחקים','מצטבר','ממוצע למשחק']];
+  const statEntries = Object.entries(state.playerStats).sort((a,b) => b[1].totalPL - a[1].totalPL);
+  for (const [name, s] of statEntries) {
+    statsRows.push([name, s.games, Number(s.totalPL.toFixed(0)), s.games ? Number((s.totalPL/s.games).toFixed(0)) : 0]);
+  }
+  const ws = XLSX.utils.aoa_to_sheet(statsRows);
+  ws['!cols'] = [{wch:18},{wch:10},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws, 'שחקנים');
+}
+
+function buildDetailSheet(wb, year) {
+  const detailRows = [['תאריך','שחקן','האם ערן','קנייה (₪)','בית (₪)','החזיר (צ\'יפים)','רווח/הפסד (₪)']];
+  const filtered = state.gamesLog.filter(g => g.date.startsWith(year + '-'));
+  const sortedGames = [...filtered].sort((a,b) => a.date.localeCompare(b.date));
+  for (const g of sortedGames) {
+    for (const p of g.players) {
+      detailRows.push([g.date, p.name, p.isEran ? 'כן' : 'לא', p.moneyIn, p.house, p.returned, Number(p.pl.toFixed(0))]);
+    }
+  }
+  const ws = XLSX.utils.aoa_to_sheet(detailRows);
+  ws['!cols'] = [{wch:12},{wch:14},{wch:10},{wch:12},{wch:10},{wch:14},{wch:14}];
+  XLSX.utils.book_append_sheet(wb, ws, `פירוט ${year}`);
+}
+
+// ============ HELPERS ============
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function showModal(title, text, onConfirm) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-text').textContent = text;
+  const btn = document.getElementById('modal-confirm');
+  btn.onclick = () => { onConfirm(); closeModal(); };
+  document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('active'); }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const dateInput = document.getElementById('game-date');
+  if (dateInput) {
+    dateInput.addEventListener('change', () => {
+      state.currentGame.date = dateInput.value;
+      autoSave();
+    });
+  }
+});
+
+// ============ INIT ============
+loadState();
+ensureEran();
+document.getElementById('game-date').value = state.currentGame.date || new Date().toISOString().slice(0,10);
+renderPlayers();
+</script>
+</body>
+</html>
