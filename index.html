@@ -279,6 +279,36 @@
     .external-entry-form .btn { grid-column: span 2; }
   }
 
+  .amount-input-wrap {
+    display: flex; gap: 6px; align-items: stretch;
+  }
+  .sign-toggle {
+    flex: 0 0 50px;
+    border-radius: 10px;
+    border: 1px solid rgba(212,175,55,0.4);
+    background: rgba(212,175,55,0.12);
+    color: var(--gold);
+    font-family: 'Heebo', sans-serif; font-weight: 700; font-size: 1.4rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s ease;
+    line-height: 1;
+  }
+  .sign-toggle:active { transform: scale(0.95); }
+  .sign-toggle.minus {
+    background: rgba(255,107,122,0.2);
+    border-color: var(--red-bright);
+    color: #ff8090;
+  }
+  .sign-toggle.plus {
+    background: rgba(109,212,158,0.2);
+    border-color: var(--green);
+    color: var(--green);
+  }
+  .amount-input-wrap input {
+    flex: 1; min-width: 0;
+  }
+
   .external-list { margin-top: 12px; }
   .external-row {
     display: flex; justify-content: space-between; align-items: center;
@@ -412,8 +442,11 @@
           <input type="date" id="ext-date">
         </div>
         <div>
-          <label>סכום (₪, מינוס להפסד)</label>
-          <input type="number" id="ext-amount" placeholder="200 או -150" step="10" inputmode="numeric">
+          <label>סכום (₪)</label>
+          <div class="amount-input-wrap">
+            <button type="button" class="sign-toggle plus" id="ext-sign" onclick="toggleSign()">+</button>
+            <input type="number" id="ext-amount" placeholder="200" step="10" inputmode="numeric" min="0">
+          </div>
         </div>
         <button class="btn btn-gold" onclick="addExternalEntry()">הוסף</button>
       </div>
@@ -834,12 +867,29 @@ function confirmClear() {
 }
 
 // ============ EXTERNAL ENTRIES ============
+function toggleSign() {
+  const btn = document.getElementById('ext-sign');
+  if (btn.classList.contains('plus')) {
+    btn.classList.remove('plus');
+    btn.classList.add('minus');
+    btn.textContent = '−';
+  } else {
+    btn.classList.remove('minus');
+    btn.classList.add('plus');
+    btn.textContent = '+';
+  }
+}
+
 function addExternalEntry() {
   const date = document.getElementById('ext-date').value;
   const amountStr = document.getElementById('ext-amount').value;
   if (!date) { showToast('בחר תאריך'); return; }
-  const amount = parseFloat(amountStr);
-  if (isNaN(amount) || amount === 0) { showToast('הזן סכום'); return; }
+  const rawAmount = parseFloat(amountStr);
+  if (isNaN(rawAmount) || rawAmount === 0) { showToast('הזן סכום'); return; }
+
+  const isMinus = document.getElementById('ext-sign').classList.contains('minus');
+  // Use absolute value with the sign from the toggle (in case user typed negative anyway)
+  const amount = (isMinus ? -1 : 1) * Math.abs(rawAmount);
 
   const month = date.slice(0,7);
   const year = parseInt(date.slice(0,4));
@@ -853,6 +903,12 @@ function addExternalEntry() {
   });
 
   document.getElementById('ext-amount').value = '';
+  // Reset sign toggle to plus after adding
+  const signBtn = document.getElementById('ext-sign');
+  signBtn.classList.remove('minus');
+  signBtn.classList.add('plus');
+  signBtn.textContent = '+';
+
   saveState(true);
   renderIncome();
   renderExternalList();
