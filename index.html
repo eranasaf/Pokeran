@@ -6,7 +6,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#062518">
-<title>ערב פוקר</title>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>ערב פוקר v7</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -50,6 +53,14 @@
   }
   .app-bar h1::before { content: "♠ "; opacity: 0.6; }
   .app-bar h1::after { content: " ♣"; opacity: 0.6; }
+
+  .version-badge {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    background: var(--gold); color: var(--felt-dark);
+    font-size: 0.6rem; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px;
+    letter-spacing: 0.5px;
+  }
 
   .save-indicator {
     position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
@@ -214,6 +225,97 @@
   }
   .stat-label { font-size: 0.72rem; opacity: 0.78; margin-top: 3px; text-transform: uppercase; letter-spacing: 1px; }
 
+  /* Hero P/L card - the most important info */
+  .hero-pl {
+    background: linear-gradient(145deg, rgba(0,0,0,0.5) 0%, rgba(20,82,63,0.4) 100%);
+    border: 2px solid var(--gold);
+    border-radius: 14px;
+    padding: 18px 14px;
+    text-align: center;
+    margin-bottom: 12px;
+    box-shadow: 0 0 20px rgba(212,175,55,0.15);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-pl::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(212,175,55,0.18), transparent 60%);
+    pointer-events: none;
+  }
+  .hero-pl-label {
+    font-size: 0.78rem; opacity: 0.85; color: var(--cream);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 6px; position: relative;
+  }
+  .hero-pl-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem; font-weight: 800;
+    letter-spacing: 2px; line-height: 1.1;
+    margin-bottom: 8px; position: relative;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
+  .hero-pl-value.profit { color: var(--green); text-shadow: 0 0 24px rgba(109,212,158,0.4), 0 2px 8px rgba(0,0,0,0.5); }
+  .hero-pl-value.loss { color: #ff8090; text-shadow: 0 0 24px rgba(255,107,122,0.4), 0 2px 8px rgba(0,0,0,0.5); }
+  .hero-pl-value.zero { color: var(--gold); }
+  .hero-pl-breakdown {
+    display: flex; justify-content: center; gap: 10px;
+    font-size: 0.88rem; color: var(--cream); opacity: 0.9;
+    flex-wrap: wrap; position: relative;
+  }
+  .hero-pl-breakdown strong { color: var(--gold); font-weight: 700; }
+  .hero-pl-breakdown .dot { opacity: 0.4; }
+
+  /* Chip balance section (secondary) */
+  .chip-section {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(0,0,0,0.25);
+    border-radius: 10px;
+    border: 1px dashed rgba(212,175,55,0.25);
+  }
+  .chip-section-title {
+    font-size: 0.78rem; opacity: 0.85;
+    text-align: center; margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .chip-stats {
+    display: flex; justify-content: space-around; gap: 8px;
+  }
+  .chip-stat { text-align: center; flex: 1; }
+  .chip-stat-label { font-size: 0.72rem; opacity: 0.7; margin-bottom: 2px; }
+  .chip-stat-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem; color: var(--gold);
+    letter-spacing: 1px;
+  }
+
+  /* Coin pop animation */
+  .coin-pop {
+    position: fixed;
+    font-family: 'Bebas Neue', sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
+    color: var(--felt-dark);
+    background: linear-gradient(145deg, #ffd966 0%, #d4af37 50%, #b8941f 100%);
+    border: 2px solid #fff5cc;
+    border-radius: 50%;
+    width: 60px; height: 60px;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none;
+    z-index: 5000;
+    box-shadow: 0 0 20px rgba(212,175,55,0.7), inset 0 -3px 8px rgba(0,0,0,0.3), inset 0 3px 6px rgba(255,255,255,0.4);
+    animation: coinPop 1s ease-out forwards;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.5);
+  }
+  @keyframes coinPop {
+    0% { transform: translate(-50%, -50%) scale(0.3) rotate(0deg); opacity: 0; }
+    20% { transform: translate(-50%, -50%) scale(1.15) rotate(-15deg); opacity: 1; }
+    40% { transform: translate(-50%, -100%) scale(1) rotate(20deg); opacity: 1; }
+    70% { transform: translate(-50%, -160%) scale(0.95) rotate(-10deg); opacity: 0.85; }
+    100% { transform: translate(-50%, -240%) scale(0.6) rotate(15deg); opacity: 0; }
+  }
+
   .chip-balance {
     margin-top: 14px; padding: 12px 14px; border-radius: 12px;
     border: 1px solid; display: flex; align-items: center; gap: 10px;
@@ -340,6 +442,7 @@
 <div class="app-bar">
   <div class="app-bar-inner">
     <h1>ערב פוקר</h1>
+    <div class="version-badge">v7</div>
     <div class="save-indicator" id="save-indicator">💾 נשמר</div>
   </div>
 </div>
@@ -375,25 +478,32 @@
     <div id="players-container" class="players-grid"></div>
 
     <div class="grand-summary" id="grand-summary" style="display:none;">
-      <div class="summary-grid">
-        <div class="stat-box">
-          <div class="stat-value" id="total-buyin">₪0</div>
-          <div class="stat-label">קופה</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-value" id="house-net">₪0</div>
-          <div class="stat-label">בית נטו</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-value" id="eran-net">₪0</div>
-          <div class="stat-label">רווח/הפסד</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-value" id="total-evening">₪0</div>
-          <div class="stat-label">סה"כ הערב</div>
+      <!-- Hero: My personal P/L (the only thing that matters in main tab) -->
+      <div class="hero-pl" id="hero-pl">
+        <div class="hero-pl-label">הרווח/הפסד שלי הערב</div>
+        <div class="hero-pl-value" id="eran-net">₪0</div>
+        <div class="hero-pl-breakdown">
+          <span>קניתי: <strong id="eran-bought">₪0</strong></span>
+          <span class="dot">•</span>
+          <span>החזרתי: <strong id="eran-returned-shek">₪0</strong></span>
         </div>
       </div>
-      <div id="chip-balance" class="chip-balance ok" style="display:none;"></div>
+
+      <!-- Chip balance (informational only, secondary) -->
+      <div class="chip-section">
+        <div class="chip-section-title">⚖️ ספירת צ'יפים בסוף הערב</div>
+        <div class="chip-stats">
+          <div class="chip-stat">
+            <div class="chip-stat-label">נקנו</div>
+            <div class="chip-stat-val" id="chips-bought">0</div>
+          </div>
+          <div class="chip-stat">
+            <div class="chip-stat-label">הוחזרו</div>
+            <div class="chip-stat-val" id="chips-returned">0</div>
+          </div>
+        </div>
+        <div id="chip-balance" class="chip-balance ok" style="display:none;"></div>
+      </div>
     </div>
 
     <div class="btn-group">
@@ -457,7 +567,7 @@
       <h2>📋 פירוט ערבים</h2>
       <table class="income-table" id="games-log-table">
         <thead>
-          <tr><th>תאריך</th><th>שחקנים</th><th>בית</th><th>רווח שלי</th><th>נטו</th><th></th></tr>
+          <tr><th>תאריך</th><th>שחקנים</th><th>בית</th><th>רווח שלי</th><th>נטו לחודש</th><th></th></tr>
         </thead>
         <tbody id="games-log-tbody"></tbody>
       </table>
@@ -662,12 +772,28 @@ function updatePlayer(id, field, value) {
   autoSave();
 }
 
-function changeAddon(id, delta) {
+function changeAddon(id, delta, event) {
   const p = state.currentGame.players.find(p => p.id === id);
   if (!p) return;
+  const before = p.addons;
   p.addons = Math.max(0, p.addons + delta);
+  // Show coin animation only when adding (delta > 0) and value actually increased
+  if (delta > 0 && p.addons > before && event) {
+    showCoinAnimation(event.currentTarget);
+  }
   renderPlayers();
   autoSave();
+}
+
+function showCoinAnimation(sourceEl) {
+  const rect = sourceEl.getBoundingClientRect();
+  const coin = document.createElement('div');
+  coin.className = 'coin-pop';
+  coin.textContent = '+100';
+  coin.style.left = (rect.left + rect.width / 2) + 'px';
+  coin.style.top = (rect.top + rect.height / 2) + 'px';
+  document.body.appendChild(coin);
+  setTimeout(() => coin.remove(), 1100);
 }
 
 function calcPlayer(p) {
@@ -702,16 +828,11 @@ function renderPlayers() {
                onchange="updatePlayer('${p.id}','entry',this.value)">
       </div>
       <div class="field-row">
-        <div class="field-label">בית (₪)</div>
-        <input type="number" class="field-input" value="${p.house}" step="10" inputmode="numeric"
-               onchange="updatePlayer('${p.id}','house',this.value)">
-      </div>
-      <div class="field-row">
         <div class="field-label">תוספות</div>
         <div class="addon-controls">
-          <button class="addon-btn" onclick="changeAddon('${p.id}',-1)" ${p.addons === 0 ? 'disabled' : ''}>−</button>
+          <button class="addon-btn" onclick="changeAddon('${p.id}',-1, event)" ${p.addons === 0 ? 'disabled' : ''}>−</button>
           <div class="addon-count">${p.addons} × 100₪</div>
-          <button class="addon-btn" onclick="changeAddon('${p.id}',1)">+</button>
+          <button class="addon-btn addon-plus" onclick="changeAddon('${p.id}',1, event)">+</button>
         </div>
       </div>
       <div class="summary-row"><span>סה"כ קנייה:</span><span><strong>₪${calc.moneyIn}</strong></span></div>
@@ -734,28 +855,25 @@ function renderPlayers() {
 function calcEvening() {
   const players = state.currentGame.players;
   let totalChipsBought = 0, totalChipsReturned = 0;
-  let houseGross = 0, eranBaseline = 0, totalBuyinShekels = 0;
+  let eranBaseline = 0, totalBuyinShekels = 0;
 
   players.forEach(p => {
     const c = calcPlayer(p);
     totalBuyinShekels += c.moneyIn;
     totalChipsBought += c.chipsReceived;
     totalChipsReturned += p.returned;
-    houseGross += p.house;
     if (p.isEran) eranBaseline = c.plShekels;
   });
 
-  const expenses = computeExpenses();
-  const houseNet = houseGross - expenses;
+  // Eran's P/L is simply: his return minus his buy-in. No auto-adjustment from chip imbalance.
+  // Chip imbalance is shown as informational warning only - user can decide what to do.
   const chipDiff = totalChipsBought - totalChipsReturned;
   const chipDiffShekels = chipDiff / 2;
-  const eranAdjusted = chipDiff >= 0 ? eranBaseline + chipDiffShekels : eranBaseline;
-  const eveningTotal = houseNet + eranAdjusted;
+  const eranAdjusted = eranBaseline; // No automatic adjustment
 
   return {
     totalBuyinShekels, totalChipsBought, totalChipsReturned,
-    houseGross, houseNet, expenses,
-    eranBaseline, chipDiff, chipDiffShekels, eranAdjusted, eveningTotal
+    eranBaseline, chipDiff, chipDiffShekels, eranAdjusted
   };
 }
 
@@ -765,27 +883,42 @@ function renderGrandSummary() {
   document.getElementById('grand-summary').style.display = 'block';
 
   const e = calcEvening();
-  document.getElementById('total-buyin').textContent = '₪' + e.totalBuyinShekels;
-  document.getElementById('house-net').textContent = '₪' + e.houseNet;
-  document.getElementById('eran-net').textContent = (e.eranAdjusted >= 0 ? '+' : '') + '₪' + e.eranAdjusted.toFixed(0);
-  document.getElementById('eran-net').style.color = e.eranAdjusted >= 0 ? 'var(--green)' : '#ff8090';
-  document.getElementById('total-evening').textContent = (e.eveningTotal >= 0 ? '+' : '') + '₪' + e.eveningTotal.toFixed(0);
 
+  // Find Eran's data
+  const eran = players.find(p => p.isEran);
+  const eranCalc = eran ? calcPlayer(eran) : { moneyIn: 0, plShekels: 0 };
+  const eranReturnedShekels = eran ? (eran.returned / 2) : 0;
+
+  // Hero P/L
+  const heroEl = document.getElementById('eran-net');
+  const plValue = e.eranAdjusted;
+  const plSign = plValue > 0 ? '+' : '';
+  heroEl.textContent = plSign + '₪' + plValue.toFixed(0);
+  heroEl.className = 'hero-pl-value ' + (plValue > 0 ? 'profit' : (plValue < 0 ? 'loss' : 'zero'));
+
+  document.getElementById('eran-bought').textContent = '₪' + eranCalc.moneyIn;
+  document.getElementById('eran-returned-shek').textContent = '₪' + eranReturnedShekels.toFixed(0);
+
+  // Chip stats (informational)
+  document.getElementById('chips-bought').textContent = e.totalChipsBought;
+  document.getElementById('chips-returned').textContent = e.totalChipsReturned;
+
+  // Chip balance alert - only show when there's been at least some return activity
   const balEl = document.getElementById('chip-balance');
-  if (e.totalChipsReturned === 0 && e.totalChipsBought === 0) {
+  if (e.totalChipsReturned === 0) {
     balEl.style.display = 'none';
     return;
   }
   balEl.style.display = 'flex';
   if (e.chipDiff === 0 && e.totalChipsBought > 0) {
     balEl.className = 'chip-balance ok';
-    balEl.innerHTML = `<span class="icon-l">✅</span><span class="text">איזון מושלם — ${e.totalChipsBought} צ'יפים נקנו וכולם הוחזרו.</span>`;
+    balEl.innerHTML = `<span class="icon-l">✅</span><span class="text">איזון מושלם — כל הצ'יפים הוחזרו.</span>`;
   } else if (e.chipDiff > 0) {
     balEl.className = 'chip-balance under';
-    balEl.innerHTML = `<span class="icon-l">ℹ️</span><span class="text">חסרים ${e.chipDiff} צ'יפים (₪${e.chipDiffShekels.toFixed(0)}) — נוסף לרווח שלך אוטומטית.</span>`;
+    balEl.innerHTML = `<span class="icon-l">ℹ️</span><span class="text">חסרים ${e.chipDiff} צ'יפים בהחזרה (₪${e.chipDiffShekels.toFixed(0)} שווי). ייתכן שיש שחקנים שעוד לא ספרת.</span>`;
   } else {
     balEl.className = 'chip-balance over';
-    balEl.innerHTML = `<span class="icon-l">⚠️</span><span class="text">החזירו ${Math.abs(e.chipDiff)} צ'יפים יותר מהקנייה (₪${Math.abs(e.chipDiffShekels).toFixed(0)})! בדוק את הספירה.</span>`;
+    balEl.innerHTML = `<span class="icon-l">⚠️</span><span class="text">החזירו ${Math.abs(e.chipDiff)} צ'יפים יותר! בדוק ספירה.</span>`;
   }
 }
 
@@ -804,13 +937,22 @@ function saveAndTransfer() {
   const e = calcEvening();
   state.currentGame.date = date;
 
+  // First check chip imbalance
   if (e.chipDiff < 0) {
     showModal('אי-איזון צ\'יפים',
       `הוחזרו ${Math.abs(e.chipDiff)} צ'יפים יותר מהקנייה (₪${Math.abs(e.chipDiffShekels).toFixed(0)}). זה כנראה טעות בספירה. להמשיך בכל זאת?`,
-      () => { doTransfer(date, e); });
+      () => { confirmTransfer(date, e); });
     return;
   }
-  doTransfer(date, e);
+  confirmTransfer(date, e);
+}
+
+function confirmTransfer(date, e) {
+  const plSign = e.eranAdjusted >= 0 ? '+' : '';
+  const action = e.eranAdjusted >= 0 ? 'הרווח' : 'ההפסד';
+  showModal('שמור והעבר',
+    `יתווסף לחודש ${date.slice(5,7)}/${date.slice(0,4)}: ₪400 בית (ברירת מחדל - ניתן לעריכה בטאב הכנסות) + ${action} שלך (${plSign}₪${e.eranAdjusted.toFixed(0)}). ערב המשחק יתאפס. להעביר?`,
+    () => { doTransfer(date, e); });
 }
 
 function doTransfer(date, e) {
@@ -827,7 +969,8 @@ function doTransfer(date, e) {
   const year = parseInt(date.slice(0,4));
   ensureYearMonths(year);
   if (!state.income[month]) state.income[month] = { house: 0, profit: 0 };
-  state.income[month].house += e.houseNet;
+  // Default house contribution per evening: 400 NIS (user can adjust manually in income tab)
+  state.income[month].house += 400;
   state.income[month].profit += e.eranAdjusted;
 
   state.gamesLog.push({
@@ -835,12 +978,11 @@ function doTransfer(date, e) {
     date: date, month: month,
     playerCount: state.currentGame.players.length,
     totalBuyin: e.totalBuyinShekels,
-    houseGross: e.houseGross, houseNet: e.houseNet,
-    expenses: e.expenses,
     eranBaseline: e.eranBaseline,
     chipDiff: e.chipDiff,
     eranAdjusted: e.eranAdjusted,
-    netToMonth: e.eveningTotal,
+    houseDefault: 400,
+    netToMonth: 400 + e.eranAdjusted,
     players: playerSnapshots
   });
 
@@ -850,7 +992,8 @@ function doTransfer(date, e) {
 
   saveState(true);
   renderPlayers();
-  showToast(`✅ הועבר! נטו: ₪${e.eveningTotal.toFixed(0)}`);
+  const sign = e.eranAdjusted >= 0 ? '+' : '';
+  showToast(`✅ הועבר: בית ₪400 + ${sign}₪${e.eranAdjusted.toFixed(0)}`);
 }
 
 function confirmClear() {
@@ -1075,16 +1218,19 @@ function renderGamesLog() {
   const sorted = [...filtered].sort((a,b) => b.date.localeCompare(a.date));
   for (const g of sorted) {
     const eranVal = g.eranAdjusted !== undefined ? g.eranAdjusted : (g.eranPL || 0);
-    const houseVal = g.houseNet !== undefined ? g.houseNet : (g.houseFixed || 0);
+    const houseVal = g.houseDefault !== undefined ? g.houseDefault : (g.houseNet !== undefined ? g.houseNet : 400);
+    const netToMonth = houseVal + eranVal;
     const plClass = eranVal >= 0 ? 'pl-positive' : 'pl-negative';
     const plSign = eranVal >= 0 ? '+' : '';
+    const netClass = netToMonth >= 0 ? 'pl-positive' : 'pl-negative';
+    const netSign = netToMonth >= 0 ? '+' : '';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${g.date.slice(5)}</td>
       <td>${g.playerCount}</td>
       <td>₪${houseVal.toFixed(0)}</td>
       <td class="${plClass}">${plSign}₪${eranVal.toFixed(0)}</td>
-      <td><strong>₪${g.netToMonth.toFixed(0)}</strong></td>
+      <td><strong class="${netClass}">${netSign}₪${netToMonth.toFixed(0)}</strong></td>
       <td><button class="btn btn-red btn-sm" onclick="confirmDeleteGame('${g.id}')">🗑️</button></td>
     `;
     tbody.appendChild(tr);
@@ -1092,14 +1238,14 @@ function renderGamesLog() {
 }
 
 function confirmDeleteGame(id) {
-  showModal('מחיקת ערב', 'פעולה זו תמחק את הערב מהיומן ותחזיר את ההכנסה החודשית. להמשיך?', () => {
+  showModal('מחיקת ערב', 'פעולה זו תמחק את הערב מהיומן ותחזיר את הסכומים שהועברו לאותו חודש (בית + רווח/הפסד). להמשיך?', () => {
     const g = state.gamesLog.find(x => x.id === id);
     if (!g) return;
     if (state.income[g.month]) {
-      const houseVal = g.houseNet !== undefined ? g.houseNet : (g.houseFixed || 0);
       const eranVal = g.eranAdjusted !== undefined ? g.eranAdjusted : (g.eranPL || 0);
-      state.income[g.month].house -= houseVal;
+      const houseVal = g.houseDefault !== undefined ? g.houseDefault : (g.houseNet !== undefined ? g.houseNet : 0);
       state.income[g.month].profit -= eranVal;
+      state.income[g.month].house -= houseVal;
     }
     for (const ps of g.players) {
       if (state.playerStats[ps.name]) {
